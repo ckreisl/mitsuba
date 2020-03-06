@@ -19,6 +19,7 @@
 #include <mitsuba/core/statistics.h>
 #include <mitsuba/render/integrator.h>
 #include <mitsuba/render/renderproc.h>
+#include <mitsuba/render/staticsampler.h>
 
 MTS_NAMESPACE_BEGIN
 
@@ -137,6 +138,68 @@ void SamplingIntegrator::wakeup(ConfigurableObject *parent,
     /* Do nothing by default */
 }
 
+#ifdef DETERMINISTIC
+void SamplingIntegrator::renderBlock(const Scene *scene,
+        const Sensor *sensor, Sampler *sampler, ImageBlock *block,
+        const bool &stop, const std::vector< TPoint2<uint8_t> > &points) {
+
+    Float diffScaleFactor = 1.0f /
+        std::sqrt((Float) sampler->getSampleCount());
+
+    bool needsApertureSample = sensor->needsApertureSample();
+    bool needsTimeSample = sensor->needsTimeSample();
+
+    RadianceQueryRecord rRec;
+    Point2 apertureSample(0.5f);
+    Float timeSample = 0.5f;
+    RayDifferential sensorRay;
+
+    block->clear();
+
+    uint32_t queryType = RadianceQueryRecord::ESensorRay;
+
+    if (!sensor->getFilm()->hasAlpha()) /* Don't compute an alpha channel if we don't have to */
+        queryType &= ~RadianceQueryRecord::EOpacity;
+
+    for (size_t i = 0; i<points.size(); ++i) {
+        Point2i offset = Point2i(points[i]) + Vector2i(block->getOffset());
+        if (stop)
+            break;
+
+        /* MODIFIED RENDER PART TO ALLOW FOR DETERMINISTIC RENDERING */
+        ref<Sampler> pixelSampler = StaticDeterministicPixelSampler::getSamplerToPixel(
+        		offset.x,
+				offset.y,
+				sampler->getSampleCount());
+        sampler = pixelSampler.get();
+        this->configureSampler(scene, sampler);
+        rRec = RadianceQueryRecord(scene, sampler);
+        /* DETERMINISTIC MODIFIED PART END */
+
+        sampler->generate(offset);
+
+        for (size_t j = 0; j<sampler->getSampleCount(); j++) {
+            rRec.newQuery(queryType, sensor->getMedium());
+            Point2 samplePos(Point2(offset) + Vector2(rRec.nextSample2D()));
+
+            if (needsApertureSample)
+                apertureSample = rRec.nextSample2D();
+            if (needsTimeSample)
+                timeSample = rRec.nextSample1D();
+
+            Spectrum spec = sensor->sampleRayDifferential(
+                sensorRay, samplePos, apertureSample, timeSample);
+
+            sensorRay.scaleDifferential(diffScaleFactor);
+
+            spec *= Li(sensorRay, rRec);
+            block->put(samplePos, spec, rRec.alpha);
+            sampler->advance();
+        }
+    }
+}
+
+#else
 void SamplingIntegrator::renderBlock(const Scene *scene,
         const Sensor *sensor, Sampler *sampler, ImageBlock *block,
         const bool &stop, const std::vector< TPoint2<uint8_t> > &points) const {
@@ -186,6 +249,7 @@ void SamplingIntegrator::renderBlock(const Scene *scene,
         }
     }
 }
+#endif
 
 MonteCarloIntegrator::MonteCarloIntegrator(const Properties &props) : SamplingIntegrator(props) {
     /* Depth to begin using russian roulette */
