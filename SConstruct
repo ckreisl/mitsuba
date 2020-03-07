@@ -32,6 +32,8 @@ def build(scriptFile, exports = [], duplicate = 0):
 
 # Core support library
 build('src/libcore/SConscript')
+# Injection compile EMCA library
+build('src/libemca/SConscript')
 # Rendering-related APIs
 build('src/librender/SConscript')
 # Hardware acceleration

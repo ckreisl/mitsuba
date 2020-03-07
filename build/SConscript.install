@@ -47,7 +47,7 @@ if 'linux' in sys.platform:
         for plugin in plugins:
                 installTargets += env.Install(os.path.join(distDir, 'plugins'), plugin)
         install(distDir, ['libcore/libmitsuba-core.so', 'libhw/libmitsuba-hw.so',
-                        'librender/libmitsuba-render.so', 'libbidir/libmitsuba-bidir.so'])
+                        'librender/libmitsuba-render.so', 'libbidir/libmitsuba-bidir.so', 'libemca/libmitsuba-emca.so'])
         for ver in hasPython:
                 installAs(os.path.join(distDir, 'python/'+ver+'/mitsuba.so'), 'libpython/mitsuba_python' + ver + '.so')
         install(distDir, ['mitsuba/mitsuba', 'mitsuba/mtssrv', 'mitsuba/mtsutil'])

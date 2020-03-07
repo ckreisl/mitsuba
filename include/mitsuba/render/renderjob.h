@@ -110,6 +110,15 @@ public:
     /// Return the amount of time spent rendering the given job (in seconds)
     inline Float getRenderTime() const { return m_queue->getRenderTime(this); }
 
+    /// Return sceneResID
+    inline int getSceneResID() { return m_sceneResID; }
+
+    /// Return samplerResID
+    inline int getSamplerResID() { return m_samplerResID; }
+
+    /// Return sensorResID
+    inline int getSensorResID() { return m_sensorResID; }
+
     MTS_DECLARE_CLASS()
 protected:
     /// Virtual destructor
