@@ -1,0 +1,29 @@
+/*
+ * vsdmessages.h
+ *
+ *  Created on: Aug 10, 2018
+ *      Author: ckreisl
+ */
+
+#ifndef INCLUDE_EMCA_MESSAGES_H_
+#define INCLUDE_EMCA_MESSAGES_H_
+
+#include <emca/platform.h>
+
+EMCA_NAMESPACE_BEGIN
+
+enum MTS_EXPORT_EMCA Message {
+	EMCA_HELLO 		 		= 0x0001,
+	EMCA_HEADER_RENDER_INFO = 0x000A,
+	EMCA_SET_RENDER_INFO 	= 0x000B,
+	EMCA_RENDER_IMAGE 		= 0x000D,
+	EMCA_RENDER_PIXEL 		= 0x000E,
+	EMCA_HEADER_SCENE_DATA	= 0x000F,
+	EMCA_HEADER_CAMERA		= 0x0010,
+	EMCA_DISCONNECT			= 0x1bcc,
+	EMCA_QUIT		 		= 0x1bcd
+};
+
+EMCA_NAMESPACE_END
+
+#endif /* INCLUDE_EMCA_MESSAGES_H_ */
