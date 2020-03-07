@@ -16,8 +16,6 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#define DETERMINISTIC
-
 #pragma once
 #if !defined(__MITSUBA_RENDER_INTEGRATOR_H_)
 #define __MITSUBA_RENDER_INTEGRATOR_H_
@@ -392,7 +390,7 @@ public:
      *    Reference to a boolean, which will be set to true when
      *    the user has requested that the program be stopped
      */
-#ifdef DETERMINISTIC
+#if defined(DETERMINISTIC)
     virtual void renderBlock(const Scene *scene, const Sensor *sensor,
         Sampler *sampler, ImageBlock *block, const bool &stop,
         const std::vector< TPoint2<uint8_t> > &points);

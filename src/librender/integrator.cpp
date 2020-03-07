@@ -19,7 +19,10 @@
 #include <mitsuba/core/statistics.h>
 #include <mitsuba/render/integrator.h>
 #include <mitsuba/render/renderproc.h>
+
+#if defined(DETERMINISTIC)
 #include <mitsuba/render/staticsampler.h>
+#endif
 
 MTS_NAMESPACE_BEGIN
 
@@ -138,7 +141,7 @@ void SamplingIntegrator::wakeup(ConfigurableObject *parent,
     /* Do nothing by default */
 }
 
-#ifdef DETERMINISTIC
+#if defined(DETERMINISTIC)
 void SamplingIntegrator::renderBlock(const Scene *scene,
         const Sensor *sensor, Sampler *sampler, ImageBlock *block,
         const bool &stop, const std::vector< TPoint2<uint8_t> > &points) {
