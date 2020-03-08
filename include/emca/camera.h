@@ -18,6 +18,8 @@ class MTS_EXPORT_EMCA Camera {
 public:
 
 	Camera();
+	Camera(float nearClip, float farClip, float focusDist, float fov,
+			Vec3f up, Vec3f dir, Point3f origin);
 	~Camera();
 
 	void setNearClip(float nearClip) { m_nearClip = nearClip; }

@@ -12,6 +12,7 @@
 #include <emca/messages.h>
 #include <emca/platform.h>
 #include <emca/renderinfo.h>
+#include <emca/camera.h>
 
 EMCA_NAMESPACE_BEGIN
 
@@ -22,15 +23,16 @@ public:
 	virtual ~RenderController();
 
 	virtual void renderImage() = 0;
-	virtual void renderPixel(unsigned int x, unsigned int y) = 0;
-	virtual void setRenderInformation() = 0;
-	virtual void setCameraInformation(Stream* stream) = 0;
-	virtual void setMeshInformation(Stream* stream) = 0;
-	virtual void updateRenderInfo(RenderInfo *sceneInfo) = 0;
+	virtual void renderPixel(
+			unsigned int x,
+			unsigned int y, int
+			sampleCount) = 0;
+	virtual void sendRenderInformation(Stream *stream) = 0;
+	virtual void sendCameraData(Stream *stream) = 0;
+	virtual void sendMeshData(Stream *stream) = 0;
+	virtual void updateSampleCount(int sampleCount) = 0;
 
-	inline RenderInfo *getRenderInfo() { return m_renderInfo; }
 	inline DataApi *getDataApi() { return m_dataapi; }
-
 	inline void setDataApi(DataApi* dataapi) { m_dataapi = dataapi; }
 
 	void readRenderInfo(Stream *stream);
@@ -43,7 +45,6 @@ public:
 protected:
 
 private:
-	RenderInfo *m_renderInfo;
 	DataApi *m_dataapi;
 };
 

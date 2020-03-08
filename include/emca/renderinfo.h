@@ -17,6 +17,9 @@ class MTS_EXPORT_EMCA RenderInfo {
 public:
 
 	RenderInfo();
+	RenderInfo(std::string sceneName, std::string pathToOutputFile,
+			std::string extension, int sampleCount);
+	~RenderInfo();
 
 	void setSceneName(std::string sceneName) { m_sceneName = sceneName; }
 	void setOutputFilepath(std::string pathToOutputFile) { m_outputFilepath = pathToOutputFile; }

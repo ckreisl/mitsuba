@@ -93,25 +93,30 @@ public:
 			SLog(EInfo, "Init error.");
 			exit(retval);
 		}
-		SLog(EInfo, "Starting Visual Debugger Server ...");
+		SLog(EInfo, "Starting Server for Explorer of Monte-Carlo based Algorithms ...");
 	}
-	virtual ~CopyMitsuba() {
-	}
-	void renderImage() {
-		mitsuba_render();
-		m_rendered = true;
-	}
-	void renderPixel(unsigned int x, unsigned int y) {
-		// if images was not rendered before initilize scene and start pre-processing
+
+	virtual ~CopyMitsuba() { }
+
+	void runPreprocess() {
 		if (!m_rendered) {
 			if(!m_scene->preprocess(renderQueue, m_thr, m_thr->getSceneResID(), m_thr->getSensorResID(), m_thr->getSamplerResID())) {
 				std::cout << "PREPROCESS FAILED!" << std::endl;
 			}
 			m_rendered = true;
 		}
+	}
+
+	void renderImage() {
+		mitsuba_render();
+		m_rendered = true;
+	}
+
+	void renderPixel(unsigned int x, unsigned int y, int sampleCount) {
+		// if images was not rendered before initialize scene and start pre-processing
+		runPreprocess();
 		// basic render process copied from render/integrator.cpp
 		Point2i pixel(x, y);
-		int sampleCount = this->getRenderInfo()->getSampleCount();
 		ref<Sampler> sampler = StaticDeterministicPixelSampler::getSamplerToPixel(x, y, sampleCount);
 		// copied path tracer
 		MonteCarloIntegrator *integrator = static_cast<MonteCarloIntegrator *>(m_scene->getIntegrator());
@@ -134,9 +139,10 @@ public:
 		Spectrum spec;
 		Spectrum L;
 		Spectrum mcL = Spectrum(0.0);
-		emca::DataApiMitsuba *dataApiMitsuba = static_cast<emca::DataApiMitsuba* >(getDataApi());
+		// work with provided data API interface for mitsuba
+		emca::DataApiMitsuba *dataApiMitsuba = emca::DataApiMitsuba::getInstance();
 		for (int sampleIdx = 0; sampleIdx < sampleCount; sampleIdx++) {
-			this->getDataApi()->setSampleIdx(sampleIdx);
+			dataApiMitsuba->setSampleIdx(sampleIdx);
 			rRec.newQuery(queryType, sensor->getMedium());
 			Point2 samplePos(Point2(pixel) + Vector2(rRec.nextSample2D()));
 			if (needsApertureSample)
@@ -156,31 +162,24 @@ public:
 		}
 		// final estimated value
 		mcL /= (Float)sampleCount;
-		dataApiMitsuba->setFinalEstimate(mcL);
 	}
-	void setRenderInformation() {
+
+	void sendRenderInformation(emca::Stream *stream) {
 		fs::path pathToFile = m_scene->getSourceFile();
 		fs::path fileName = pathToFile.filename();
 		fs::path pathToOutputFile = m_scene->getDestinationFile();
 		fs::path extension = pathToOutputFile.extension();
 		Sampler *sampler = m_scene->getSampler();
 		int sampleCount = sampler->getSampleCount();
-		emca::RenderInfo *renderInfo = getRenderInfo();
-		renderInfo->setSceneName(fileName.string());
-		renderInfo->setOutputFilepath(pathToOutputFile.string());
-		renderInfo->setOutputFileExtension(extension.string());
-		renderInfo->setSampleCount(sampleCount);
+
+		emca::RenderInfo(fileName.string(), pathToOutputFile.string(),
+				extension.string(), sampleCount).serialize(stream);
 	}
-	void setCameraInformation(emca::Stream* stream) {
-		// if images was not rendered before initilize scene and start pre-processing
-		if (!m_rendered) {
-			if(!m_scene->preprocess(renderQueue, m_thr, m_thr->getSceneResID(), m_thr->getSensorResID(), m_thr->getSamplerResID())) {
-				std::cout << "PREPROCESS FAILED!" << std::endl;
-			}
-			m_rendered = true;
-		}
-		// init vsd camera
-		emca::Camera camera = emca::Camera();
+
+	void sendCameraData(emca::Stream *stream) {
+		// if images was not rendered before, initialize scene and start pre-processing
+		runPreprocess();
+
 		// get camera settings from rendering system
 		Sensor *sensor = m_scene->getSensor();
 		Properties props = sensor->getProperties();
@@ -196,25 +195,14 @@ public:
 				origin.x() + mat(0, 2),
 				origin.y() + mat(1, 2),
 				origin.z() + mat(2, 2));
-		// set camera parameters
-		camera.setNearClip(nearClip);
-		camera.setFarClip(farClip);
-		camera.setFocusDist(focusDist);
-		camera.setFov(fov);
-		camera.setOrigin(origin);
-		camera.setDirectionVector(dir);
-		camera.setUpVector(up);
-		// send camera parameters to client
-		camera.serialize(stream);
+
+		// Initialize and serialize EMCA camera
+		emca::Camera(nearClip, farClip, focusDist, fov,
+				up, dir, origin).serialize(stream);
 	}
-	void setMeshInformation(emca::Stream* stream) {
-		// if images was not rendered before initilize scene and start pre-processing
-		if (!m_rendered) {
-			if(!m_scene->preprocess(renderQueue, m_thr, m_thr->getSceneResID(), m_thr->getSensorResID(), m_thr->getSamplerResID())) {
-				std::cout << "PREPROCESS FAILED!" << std::endl;
-			}
-			m_rendered = true;
-		}
+	void sendMeshData(emca::Stream* stream) {
+		// if images was not rendered before initialize scene and start pre-processing
+		runPreprocess();
 		ref_vector<Shape> shapes = m_scene->getShapes();
 		for(unsigned int i = 0; i < shapes.size(); ++i) {
 			emca::Mesh emcaMesh = emca::Mesh();
@@ -236,15 +224,6 @@ public:
 #endif
 			// get triangles indices
 			Triangle *triangles = triMesh->getTriangles();
-            /*
-			for(uint32_t tri = 0; tri < triMesh->getTriangleCount(); tri++) {
-				vsd::Vec3i vsdPoint(
-						triangles[tri].idx[0],
-						triangles[tri].idx[1],
-						triangles[tri].idx[2]);
-				vsdMesh.addTriangleIndices(vsdPoint);
-			}
-            */
             //mitsuba uses a compatible point type, no need to convert data one-by-one
             emcaMesh.addTriangles(reinterpret_cast<emca::Vec3i*>(triangles), triMesh->getTriangleCount());
 			// define color of object
@@ -287,17 +266,19 @@ public:
 			emcaMesh.serialize(stream);
 		}
 	}
-	void updateRenderInfo(emca::RenderInfo *sceneInfo) {
-		int sampleCount = sceneInfo->getSampleCount();
-		Properties samplerProps{"seedsampler"};
+
+	void updateSampleCount(int sampleCount) {
+		Properties samplerProps{"deterministic"};
 		samplerProps.setInteger("sampleCount", sampleCount);
 		ref<PluginManager> pluginManager = PluginManager::getInstance();
 		ref<Sampler> sampler = static_cast<Sampler*>(pluginManager->createObject(MTS_CLASS(Sampler), samplerProps));
 		m_scene->setSampler(sampler.get());
 	}
+
 	void help() {
 		cout << "Help msg!" << endl;
 	}
+
 	void mitsuba_render() {
 		int i = 1;
 		int flushTimer = -1;
@@ -386,8 +367,8 @@ private:
 				// check if sampler is set to seed sampler,
 				// necessary to reproduce render images
 				ref<Sampler> sampler = m_scene->getSampler();
-                if(false && sampler->getClass()->getName() != "SeedSampler") {
-					std::cerr << "Set SeedSampler as default Sampler in your scene!" << endl;
+                if(false && sampler->getClass()->getName() != "DeterministicSampler") {
+					std::cerr << "Set Deterministic Sampler as default Sampler in your scene!" << endl;
 					return -1;
 				}
 		        delete handler;
@@ -406,6 +387,7 @@ private:
 	int m_argc;
 	bool m_rendered;
 };
+
 class EMCAServer : public Utility {
 public:
     int run(int argc, char **argv) {
@@ -422,5 +404,6 @@ public:
     }
     MTS_DECLARE_UTILITY()
 };
+
 MTS_EXPORT_UTILITY(EMCAServer, "Explorer of Monte-Carlo based Algorithms")
 MTS_NAMESPACE_END

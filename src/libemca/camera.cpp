@@ -15,7 +15,20 @@ Camera::Camera() {
 	m_origin = Point3f(0, 0, 0);
 }
 
-Camera::~Camera() { }
+Camera::Camera(float nearClip, float farClip, float focusDist, float fov,
+		Vec3f up, Vec3f dir, Point3f origin) {
+	m_nearClip = nearClip;
+	m_farClip = farClip;
+	m_focusDist = focusDist;
+	m_fov = fov;
+	m_up = up;
+	m_dir = dir;
+	m_origin = origin;
+}
+
+Camera::~Camera() {
+
+}
 
 void Camera::serialize(Stream *stream) {
 	stream->writeShort(Message::EMCA_HEADER_CAMERA);
