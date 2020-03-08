@@ -32,7 +32,7 @@ private:
 	mitsuba::Point3f m_p{0.0, 0.0, 0.0};
 	int m_numSamples = 16;
     std::string m_integratorName;
-	fs::path m_path = fs::absolute("sphericalView.exr");
+	mitsuba::ref<mitsuba::Bitmap> m_bitmap;
 };
 
 EMCA_NAMESPACE_END

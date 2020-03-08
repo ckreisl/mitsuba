@@ -361,8 +361,9 @@ private:
 				m_thr = new RenderJob(formatString("ren%i", 0), m_scene, renderQueue);
 				// DEBUG add scene here to tool sphericalView
 				//*******
-				//emca::SphericalView *swTool = static_cast<emca::SphericalView*>(this->getDataApi()->getToolById(66));
-				//swTool->setScene(m_scene);
+				emca::DataApiMitsuba *api = emca::DataApiMitsuba::getInstance();
+				emca::SphericalView *swTool = static_cast<emca::SphericalView*>(api->getToolById(66));
+				swTool->setScene(m_scene);
 				//*******
 				// check if sampler is set to seed sampler,
 				// necessary to reproduce render images

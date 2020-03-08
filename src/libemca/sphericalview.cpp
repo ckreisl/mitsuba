@@ -6,6 +6,7 @@
 #include <mitsuba/core/rfilter.h>
 #include <mitsuba/core/sched.h>
 #include <mitsuba/core/timer.h>
+#include <mitsuba/core/mstream.h>
 #include <mitsuba/render/shape.h>
 #include <mitsuba/render/sampler.h>
 #include <mitsuba/render/imageblock.h>
@@ -83,21 +84,23 @@ void SphericalView::run() {
 	renderQueue->waitLeft(0);
 	renderQueue->join();
 
-	ref<Bitmap> bitmap = new Bitmap(Bitmap::ESpectrum, Bitmap::EFloat32, m_renderSize);
-	bitmap->clear();
+	m_bitmap = new Bitmap(Bitmap::ESpectrum, Bitmap::EFloat32, m_renderSize);
+	m_bitmap->clear();
 
-	film->develop(Point2i{0,0}, m_renderSize, Point2i{0,0}, bitmap);
-
-	std::cout << "Save to filepath: " << m_path.filename().c_str() << std::endl;
-	std::cout << "Path: " << m_path.c_str() << std::endl;
-	bitmap->write(m_path.filename());
+	film->develop(Point2i{0, 0}, m_renderSize, Point2i{0,0}, m_bitmap);
 }
 
 void SphericalView::serialize(Stream *stream) {
 	std::cout << "Serialize in: " << m_name << std::endl;
 	stream->writeShort(m_id);
-	std::string filepath = m_path.c_str();
-	stream->writeString(filepath);
+    if (m_bitmap) {
+        mitsuba::ref<mitsuba::MemoryStream> memStream = new mitsuba::MemoryStream();
+        m_bitmap->write(mitsuba::Bitmap::EOpenEXR, memStream);
+        stream->writeInt(memStream->getPos());
+        stream->write(memStream->getData(), memStream->getSize());
+    } else {
+        stream->writeInt(0);
+    }
 }
 
 void SphericalView::deserialize(Stream *stream) {
