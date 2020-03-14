@@ -155,7 +155,6 @@ public:
 			// take sensor ray origin as start ray instead of camera origin
 			dataApiMitsuba->setPathOrigin(Point3f(sensorRay.o.x, sensorRay.o.y, sensorRay.o.z));
 			L = integrator->Li(sensorRay, rRec);
-			dataApiMitsuba->addPathInfoSpectrum("Segment_" + std::to_string(sampleIdx), L);
 			spec *= L;
 			mcL += spec;
 			sampler->advance();

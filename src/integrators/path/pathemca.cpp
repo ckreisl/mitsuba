@@ -269,6 +269,10 @@ public:
             throughput *= bsdfWeight;
             eta *= bRec.eta;
 
+            api->addVertexInfo("BSDF Pdf", (float) bsdfPdf);
+            api->addVertexInfoSpectrum("BSDF Weight", bsdfWeight);
+            api->addVertexInfoSpectrum("Throughput", throughput);
+
             /* If a luminaire was hit, estimate the local illumination and
                weight using the power heuristic */
             if (hitEmitter &&
