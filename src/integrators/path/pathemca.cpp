@@ -241,6 +241,8 @@ public:
                     value = its.Le(-ray.d);
                     dRec.setQuery(ray, its);
                     hitEmitter = true;
+                	Point3f envmapIts = ray.o + (ray.d * sceneSize);
+					api->setIntersectionPosEnvmap(envmapIts);
                 }
             } else {
                 /* Intersected nothing -- perhaps there is an environment map? */
@@ -254,12 +256,15 @@ public:
                     }
 
                     value = env->evalEnvironment(ray);
-                    if (!env->fillDirectSamplingRecord(dRec, ray))
+                    if (!env->fillDirectSamplingRecord(dRec, ray)) {
+                    	Point3f envmapIts = ray.o + (ray.d * sceneSize);
+                    	api->setIntersectionPosEnvmap(envmapIts);
                         break;
+                    }
                     hitEmitter = true;
                 } else {
                 	Point3f envmapIts = ray.o + (ray.d * sceneSize);
-					api->setIntersectionPosEnvmap(envmapIts);
+                	api->setIntersectionPosEnvmap(envmapIts);
                     break;
                 }
             }
@@ -272,6 +277,7 @@ public:
             api->addVertexInfo("BSDF Pdf", (float) bsdfPdf);
             api->addVertexInfoSpectrum("BSDF Weight", bsdfWeight);
             api->addVertexInfoSpectrum("Throughput", throughput);
+            api->addVertexInfoPoint2f("Sample",(Point2f)rRec.nextSample2D());
 
             /* If a luminaire was hit, estimate the local illumination and
                weight using the power heuristic */
@@ -282,6 +288,8 @@ public:
                 const Float lumPdf = (!(bRec.sampledType & BSDF::EDelta)) ?
                     scene->pdfEmitterDirect(dRec) : 0;
                 Li += throughput * value * miWeight(bsdfPdf, lumPdf);
+            	Point3f envmapIts = ray.o + (ray.d * sceneSize);
+				api->setIntersectionPosEnvmap(envmapIts);
             }
 
             api->setIntersectionEstimate(Li);
@@ -293,7 +301,8 @@ public:
             /* Set the recursive query type. Stop if no surface was hit by the
                BSDF sample or if indirect illumination was not requested */
             if (!its.isValid() || !(rRec.type & RadianceQueryRecord::EIndirectSurfaceRadiance))
-                break;
+				break;
+
             rRec.type = RadianceQueryRecord::ERadianceNoEmission;
 
             if (rRec.depth++ >= m_rrDepth) {
