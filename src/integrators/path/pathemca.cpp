@@ -241,8 +241,6 @@ public:
                     value = its.Le(-ray.d);
                     dRec.setQuery(ray, its);
                     hitEmitter = true;
-                	Point3f envmapIts = ray.o + (ray.d * sceneSize);
-					api->setIntersectionPosEnvmap(envmapIts);
                 }
             } else {
                 /* Intersected nothing -- perhaps there is an environment map? */
