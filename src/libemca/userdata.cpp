@@ -14,10 +14,7 @@ UserData::UserData() {
 }
 
 UserData::~UserData() {
-	// free memory
-	for(auto &d : m_customData) {
-		delete d.second;
-	}
+
 }
 
 void UserData::addBool(std::string s, bool val) {
@@ -100,10 +97,6 @@ void UserData::addString(std::string s, std::string val) {
     }
 }
 
-void UserData::addCustomData(CustomData *data) {
-	m_customData.insert(std::make_pair(data->getIndex(), data));
-}
-
 void UserData::clear() {
 	m_boolData.clear();
 	m_floatData.clear();
@@ -115,7 +108,6 @@ void UserData::clear() {
 	m_point3iData.clear();
 	m_color4fData.clear();
     m_stringData.clear();
-	m_customData.clear();
 }
 
 void UserData::serialize(Stream *stream) {
@@ -209,16 +201,6 @@ void UserData::serialize(Stream *stream) {
         for(auto &v : d.second)
             stream->writeString(v);
     }
-
-	msgLen = m_customData.size();
-	stream->writeUInt(msgLen);
-	for(auto &d : m_customData) {
-		stream->writeShort(d.first);
-		stream->writeString(d.second->getName());
-		stream->writeUInt(d.second->getMsgLength());
-		d.second->serialize(stream);
-	}
-
 }
 
 EMCA_NAMESPACE_END

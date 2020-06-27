@@ -113,11 +113,6 @@ void DataApi::addVertexInfo(std::string s, std::string val) {
     m_paths[m_currentSampleIdx].addVertexInfo(m_currentDepthIdx, s, val);
 }
 
-void DataApi::addVertexCustomData(CustomData *data) {
-	if(!m_isCollecting || m_currentDepthIdx == -1) return;
-	m_paths[m_currentSampleIdx].addVertexCustomData(m_currentDepthIdx, data);
-}
-
 void DataApi::addPathInfo(std::string s, bool val) {
 	if(!m_isCollecting) return;
 	m_paths[m_currentSampleIdx].addBool(s, val);
@@ -166,11 +161,6 @@ void DataApi::addPathInfo(std::string s, float r, float g, float b, float alpha)
 void DataApi::addPathInfo(std::string s, std::string val) {
     if(!m_isCollecting) return;
     m_paths[m_currentSampleIdx].addString(s, val);
-}
-
-void DataApi::addPathCustomData(CustomData *data) {
-	if(!m_isCollecting) return;
-	m_paths[m_currentSampleIdx].addCustomData(data);
 }
 
 void DataApi::serialize(Stream *stream) {

@@ -20,6 +20,7 @@
 #include <mitsuba/render/renderjob.h>
 #include <mitsuba/core/plugin.h>
 #include <mitsuba/core/statistics.h>
+#include <emca/dataapimitsuba.h>
 
 #define DEFAULT_BLOCKSIZE 32
 
@@ -839,9 +840,14 @@ Spectrum Scene::sampleEmitterDirect(DirectSamplingRecord &dRec,
         if (testVisibility) {
             Ray ray(dRec.ref, dRec.d, Epsilon,
                     dRec.dist*(1-ShadowEpsilon), dRec.time);
-            if (m_kdtree->rayIntersect(ray))
+            if (m_kdtree->rayIntersect(ray)) {
+            	// occluded
+            	emca::DataApiMitsuba::getInstance()->setNextEventEstimationPos(dRec.p, true);
                 return Spectrum(0.0f);
+            }
         }
+        // not occluded
+        emca::DataApiMitsuba::getInstance()->setNextEventEstimationPos(dRec.p, false);
         dRec.object = emitter;
         dRec.pdf *= emPdf;
         value /= emPdf;

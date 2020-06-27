@@ -96,10 +96,6 @@ void PathData::addVertexInfo(int depthIdx, std::string s, std::string val) {
     m_segments[depthIdx].addString(s, val);
 }
 
-void PathData::addVertexCustomData(int depthIdx, CustomData *data) {
-	m_segments[depthIdx].addCustomData(data);
-}
-
 void PathData::serialize(Stream *stream) {
 	UserData::serialize(stream);
 

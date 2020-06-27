@@ -11,7 +11,6 @@
 #include <emca/datatypes.h>
 #include <emca/platform.h>
 #include <emca/stream.h>
-#include <emca/customdata.h>
 
 EMCA_NAMESPACE_BEGIN
 
@@ -31,7 +30,6 @@ public:
 	void addPoint3f(std::string s, float x, float y, float z);
 	void addColor4f(std::string s, float r, float g, float b, float alpha);
     void addString(std::string s, std::string val);
-	void addCustomData(CustomData *data);
 
 	void serialize(Stream *stream);
 	void clear();
@@ -47,7 +45,6 @@ private:
 	std::map<std::string, std::vector<Point3f> > 	m_point3fData;
 	std::map<std::string, std::vector<Color4f> > 	m_color4fData;
     std::map<std::string, std::vector<std::string>> m_stringData;
-	std::map<short, CustomData* >					m_customData;
 };
 
 EMCA_NAMESPACE_END

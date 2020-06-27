@@ -7,7 +7,6 @@
 #include <emca/stream.h>
 #include <emca/pathdata.h>
 #include <emca/toolhandler.h>
-#include <emca/customdata.h>
 
 /**
  * Singleton Pattern
@@ -42,7 +41,6 @@ public:
 	void addVertexInfo(std::string s, float x, float y, float z);
 	void addVertexInfo(std::string s, float r, float g, float b, float alpha);
     void addVertexInfo(std::string s, std::string val);
-	void addVertexCustomData(CustomData *data);
 
 	void addPathInfo(std::string s, bool val);
 	void addPathInfo(std::string s, float val);
@@ -54,7 +52,6 @@ public:
 	void addPathInfo(std::string s, float x, float y, float z);
 	void addPathInfo(std::string s, float r, float g, float b, float alpha);
     void addPathInfo(std::string s, std::string val);
-	void addPathCustomData(CustomData *data);
 
 	void serialize(Stream *stream);
 

@@ -41,7 +41,6 @@ public:
 	void addVertexInfo(int depthIdx, std::string s, float x, float y, float z);
 	void addVertexInfo(int depthIdx, std::string s, float r, float g, float b, float alpha);
     void addVertexInfo(int depthIdx, std::string s, std::string val);
-	void addVertexCustomData(int depthIdx, CustomData *data);
 
 	void serialize(Stream *stream);
 	void clear();
