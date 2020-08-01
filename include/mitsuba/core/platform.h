@@ -97,7 +97,6 @@
 #define MTS_MODULE_HW 3
 #define MTS_MODULE_BIDIR 4
 #define MTS_MODULE_PYTHON 5
-#define MTS_MODULE_EMCA 6
 
 #if MTS_BUILD_MODULE == MTS_MODULE_CORE
     #define MTS_EXPORT_CORE MTS_EXPORT
@@ -123,11 +122,6 @@
     #define MTS_EXPORT_PYTHON MTS_EXPORT
 #else
     #define MTS_EXPORT_PYTHON MTS_IMPORT
-#endif
-#if MTS_BUILD_MODULE == MTS_MODULE_EMCA
-    #define MTS_EXPORT_EMCA MTS_EXPORT
-#else
-    #define MTS_EXPORT_EMCA MTS_IMPORT
 #endif
 
 #if defined(__x86_64__) || defined(_M_X64) || defined(__LP64__) || defined(_LP64) || defined(WIN64)

@@ -33,18 +33,17 @@
 #include <mitsuba/core/bitmap.h>
 #include <mitsuba/core/fstream.h>
 #include <mitsuba/render/util.h>
-#include <emca/datatypes.h>
-#include <emca/dataapimitsuba.h>
-#include <emca/mesh.h>
-#include <emca/camera.h>
-#include <emca/rendercontroller.h>
-#include <emca/server.h>
-#include <emca/renderinfo.h>
-#include <emca/toolsphericalview.h>
+#include <mitsuba/core/dataapimitsuba.h>
+#include <mitsuba/render/sphericalview.h>
+
+#include <emca/renderinterface.h>
+#include <emca/scenedata.h>
+#include <emca/pathdata.h>
+#include <emca/emcaserver.h>
 MTS_NAMESPACE_BEGIN
 using XERCES_CPP_NAMESPACE::SAXParser;
 ref<RenderQueue> renderQueue = NULL;
-emca::Server *emcaServer = nullptr;
+emca::EMCAServer *emcaServer = nullptr;
 #if !defined(__WINDOWS__)
 /* Handle the hang-up signal and write a partially rendered image to disk */
 void signalHandler(int signal) {
@@ -57,7 +56,7 @@ void signalHandler(int signal) {
         abort();
         #endif
     } else if (signal == SIGINT && emcaServer) {
-    	emcaServer->shutdown();
+    	emcaServer->stop();
     	exit(EXIT_SUCCESS);
     }
 }
@@ -81,10 +80,9 @@ private:
     ref<WaitFlag> m_flag;
     int m_timeout;
 };
-class CopyMitsuba : public emca::RenderController {
+class CopyMitsuba : public emca::RenderInterface {
 public:
-	CopyMitsuba(int argc, char **argv)
-		: emca::RenderController() {
+	CopyMitsuba(int argc, char **argv) : emca::RenderInterface() {
 		int retval = mitsuba_init(argc, argv);
 		m_rendered = false;
 		m_argc = argc;
@@ -96,7 +94,7 @@ public:
 		SLog(EInfo, "Starting Server for Explorer of Monte-Carlo based Algorithms ...");
 	}
 
-	virtual ~CopyMitsuba() { }
+	~CopyMitsuba() { }
 
 	void runPreprocess() {
 		if (!m_rendered) {
@@ -140,7 +138,7 @@ public:
 		Spectrum L;
 		Spectrum mcL = Spectrum(0.0);
 		// work with provided data API interface for mitsuba
-		emca::DataApiMitsuba *dataApiMitsuba = emca::DataApiMitsuba::getInstance();
+		DataApiMitsuba *dataApiMitsuba = DataApiMitsuba::getInstance();
 		for (int sampleIdx = 0; sampleIdx < sampleCount; sampleIdx++) {
 			dataApiMitsuba->setSampleIdx(sampleIdx);
 			rRec.newQuery(queryType, sensor->getMedium());
@@ -259,8 +257,8 @@ public:
 				}
 			}
 			// add color to vsdmesh
-			emcaMesh.setDiffuseColor(diffRef);
-			emcaMesh.setSpecularColor(specRef);
+			emcaMesh.diffuseColor = diffRef;
+			emcaMesh.specularColor = specRef;
 			// send mesh to client
 			emcaMesh.serialize(stream);
 		}
@@ -358,11 +356,6 @@ private:
 				m_scene->initialize();
 				renderQueue = new RenderQueue();
 				m_thr = new RenderJob(formatString("ren%i", 0), m_scene, renderQueue);
-				// DEBUG add scene here to tool sphericalView
-				//*******
-				emca::DataApiMitsuba *api = emca::DataApiMitsuba::getInstance();
-				emca::SphericalView *swTool = static_cast<emca::SphericalView*>(api->getToolById(66));
-				swTool->setScene(m_scene);
 				//*******
 				// check if sampler is set to seed sampler,
 				// necessary to reproduce render images
@@ -395,11 +388,21 @@ public:
         	std::cout << "Need a scene.xml file ..." << std::endl;
             return 0;
         }
-    	int port = 50013;
-    	emca::RenderController *emcaController = new CopyMitsuba(argc, argv);
-    	emcaController->setDataApi(emca::DataApiMitsuba::getInstance());
-    	emcaServer = new emca::Server(port, emcaController);
-    	emcaServer->run();
+
+        // Init renderer and plugins
+        CopyMitsuba *mitsuba = new CopyMitsuba(argc, argv);
+        SphericalView *sphericalView = new SphericalView("SphericalView", 66);
+        sphericalView->setScene(mitsuba->getScene());
+
+        // Init EMCA Server
+        emca::EMCAServer *emcaServer = new emca::EMCAServer();
+        emcaServer->setRenderer(mitsuba);
+        emcaServer->setDataApi(DataApiMitsuba::getInstance());
+        emcaServer->addPlugin(sphericalView);
+        emcaServer->start();
+
+    	delete emcaServer;
+    	emcaServer = 0;
         return 0;
     }
     MTS_DECLARE_UTILITY()

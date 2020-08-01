@@ -1,3 +1,7 @@
+emca/*
+patches/*
+scenes/*
+
 # Documentation
 doc/apidocs/*
 doc/*.aux

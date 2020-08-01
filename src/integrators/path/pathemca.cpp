@@ -18,7 +18,7 @@
 
 #include <mitsuba/render/scene.h>
 #include <mitsuba/core/statistics.h>
-#include <emca/dataapimitsuba.h>
+#include <mitsuba/core/dataapimitsuba.h>
 
 MTS_NAMESPACE_BEGIN
 
@@ -134,7 +134,7 @@ public:
         Float eta = 1.0f;
 
         // Keep reference on DataApi (Singleton)
-        emca::DataApiMitsuba *api = emca::DataApiMitsuba::getInstance();
+        DataApiMitsuba *api = DataApiMitsuba::getInstance();
         float sceneSize = 100.0f;
 
         while (rRec.depth <= m_maxDepth || m_maxDepth < 0) {
@@ -272,7 +272,7 @@ public:
             throughput *= bsdfWeight;
             eta *= bRec.eta;
 
-            api->addVertexInfo("BSDF Pdf", (float) bsdfPdf);
+            api->addIntersectionData("BSDF Pdf", (float) bsdfPdf);
             api->addVertexInfoSpectrum("BSDF Weight", bsdfWeight);
             api->addVertexInfoSpectrum("Throughput", throughput);
             api->addVertexInfoPoint2f("Sample",(Point2f)rRec.nextSample2D());
